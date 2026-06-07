@@ -1,0 +1,13 @@
+# Render Blueprint — otomatik yapılandırma (https://render.com)
+# Render'da "New → Blueprint" ile bu repoyu seçersen ayarları buradan okur.
+services:
+  - type: web
+    name: supheli-olum
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "20"

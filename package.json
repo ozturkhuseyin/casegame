@@ -1,0 +1,25 @@
+{
+  "name": "supheli-olum",
+  "version": "0.1.0",
+  "description": "Şüpheli Ölüm — Durum simülasyonu tabanlı çok oyunculu sosyal çıkarım oyunu (web multiplayer)",
+  "type": "module",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "multiplayer",
+    "social-deduction",
+    "game",
+    "websocket"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5"
+  }
+}

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Şüpheli Ölüm</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <!-- ============ GİRİŞ / LOBİ EKRANI ============ -->
+  <div id="screen-lobby" class="screen active">
+    <div class="lobby-card">
+      <h1>Şüpheli Ölüm</h1>
+      <p class="tagline">Durum simülasyonu tabanlı sosyal çıkarım. Bir ölüm var. Gerçeği siz çözün.</p>
+
+      <label>İsmin
+        <input id="input-name" type="text" maxlength="20" placeholder="Adın" />
+      </label>
+
+      <div id="lobby-actions">
+        <button id="btn-create" class="primary">Oda Kur</button>
+        <div class="join-row">
+          <input id="input-code" type="text" maxlength="4" placeholder="ODA KODU" />
+          <button id="btn-join">Katıl</button>
+        </div>
+      </div>
+      <p id="lobby-error" class="error"></p>
+    </div>
+  </div>
+
+  <!-- ============ BEKLEME ODASI (lobby state) ============ -->
+  <div id="screen-waiting" class="screen">
+    <div class="lobby-card">
+      <h2>Bekleme Odası</h2>
+      <div class="code-display">Oda Kodu: <span id="room-code"></span></div>
+      <p class="hint">Arkadaşların bu kodla katılabilir.</p>
+      <ul id="waiting-players" class="player-list-waiting"></ul>
+      <div id="host-controls" class="hidden">
+        <label>Tur sayısı
+          <select id="select-rounds">
+            <option value="">Otomatik (oyuncu sayısına göre)</option>
+            <option value="3">3 (hızlı)</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+          </select>
+        </label>
+        <button id="btn-start" class="primary">Oyunu Başlat</button>
+      </div>
+      <p id="waiting-hint" class="hint">Host'un başlatması bekleniyor...</p>
+    </div>
+  </div>
+
+  <!-- ============ OYUN EKRANI ============ -->
+  <div id="screen-game" class="screen">
+    <!-- Üst şerit: faz, tur, sayaç -->
+    <header id="topbar">
+      <div class="phase-info">
+        <span id="phase-label">—</span>
+        <span id="round-label"></span>
+      </div>
+      <div id="timer" class="timer">--:--</div>
+      <div class="topbar-right">
+        <button id="btn-voice" class="small" title="Sesli sohbet aç/kapat">🎙️ Ses: Kapalı</button>
+        <button id="btn-phone" class="small hidden">📱 Telefon</button>
+        <button id="btn-floor" class="small hidden">Söz İste</button>
+        <span id="floor-indicator" class="floor-indicator hidden"></span>
+        <button id="btn-skip" class="small hidden">Fazı Atla</button>
+        <span id="topbar-code"></span>
+      </div>
+    </header>
+
+    <!-- Baskı turu banner'ı -->
+    <div id="pressure-banner" class="pressure-banner hidden"></div>
+
+    <!-- Odanı dinleyenler uyarısı -->
+    <div id="listeners-warning" class="listeners-warning hidden"></div>
+
+    <div id="game-grid">
+      <!-- SOL: oyuncu listesi + rol kartı -->
+      <aside id="left-panel">
+        <div id="role-card" class="card">
+          <h3>Rolün</h3>
+          <div id="role-name" class="role-name">—</div>
+          <div id="role-type" class="role-type"></div>
+          <div id="role-secret" class="secret"></div>
+          <div id="role-goal" class="goal"></div>
+          <div id="role-behavior" class="behavior"></div>
+        </div>
+        <div class="card ap-card">
+          <span>Aksiyon Puanı</span>
+          <span id="ap-value" class="ap-value">0</span>
+        </div>
+        <div class="card">
+          <h3>Oyuncular</h3>
+          <ul id="player-list"></ul>
+        </div>
+      </aside>
+
+      <!-- ORTA: ev krokisi -->
+      <main id="center-panel">
+        <div id="house-map"></div>
+        <div id="map-legend">
+          <span><i class="dot you"></i> Sen</span>
+          <span><i class="dot same"></i> Aynı oda</span>
+          <span><i class="dot adj"></i> Yan oda</span>
+        </div>
+      </main>
+
+      <!-- SAĞ: oda içeriği + not defteri -->
+      <aside id="right-panel">
+        <div id="room-content" class="card">
+          <h3 id="room-title">Oda</h3>
+          <p id="room-role" class="room-role"></p>
+          <ul id="object-list"></ul>
+        </div>
+        <div id="notebook-card" class="card">
+          <h3>Not Defteri (gizli)</h3>
+          <textarea id="notebook" placeholder="Şüphelerini, tanıklıklarını, çıkarımlarını yaz..."></textarea>
+        </div>
+      </aside>
+    </div>
+
+    <!-- ALT: envanter + sohbet + announce -->
+    <footer id="bottombar">
+      <div id="inventory-strip">
+        <span class="strip-label">Envanter:</span>
+        <div id="inventory-items"></div>
+      </div>
+      <div id="chat-box">
+        <div id="chat-messages"></div>
+        <div class="chat-input-row">
+          <input id="chat-input" type="text" placeholder="Bu odadakilerle konuş (yan oda boğuk duyar)..." maxlength="300" />
+          <button id="btn-chat-send" class="small">Gönder</button>
+          <button id="btn-announce" class="small announce">İlan Et</button>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ============ OYLAMA EKRANI ============ -->
+  <div id="screen-vote" class="screen">
+    <div class="vote-card">
+      <h2>Son Oylama</h2>
+      <p>Ne oldu? Kararını ver.</p>
+      <div class="verdict-buttons">
+        <button class="verdict" data-verdict="cinayet">Cinayet</button>
+        <button class="verdict" data-verdict="kaza">Kaza</button>
+        <button class="verdict" data-verdict="intihar">İntihar</button>
+      </div>
+      <div id="suspect-section" class="hidden">
+        <h3>Fail kim?</h3>
+        <select id="suspect-select"></select>
+      </div>
+      <button id="btn-cast-vote" class="primary" disabled>Oyu Kullan</button>
+      <p id="vote-status" class="hint"></p>
+    </div>
+  </div>
+
+  <!-- ============ İFŞA EKRANI ============ -->
+  <div id="screen-reveal" class="screen">
+    <div class="reveal-card">
+      <h2>İfşa & Gerçeklik</h2>
+      <div id="reveal-summary"></div>
+      <h3>Açığa Çıkan Sırlar</h3>
+      <ul id="reveal-secrets"></ul>
+      <h3>Tüm Event Log (geriye dönük anlatı)</h3>
+      <ul id="reveal-log"></ul>
+      <button id="btn-back-lobby" class="primary">Yeni Oyun (Lobiye Dön)</button>
+    </div>
+  </div>
+
+  <!-- Telefon modalı (Bölüm 9) -->
+  <div id="phone-modal" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>📱 Telefon</h3>
+        <button id="phone-close" class="small">Kapat</button>
+      </div>
+      <div id="phone-devices"></div>
+      <div class="phone-compose">
+        <select id="phone-to"></select>
+        <input id="phone-text" type="text" placeholder="Mesaj..." maxlength="200" />
+        <button id="phone-send" class="small">Gönder</button>
+        <button id="phone-call" class="small announce">Ara</button>
+      </div>
+      <p id="phone-call-status" class="hint"></p>
+    </div>
+  </div>
+
+  <!-- Birlikte arama daveti -->
+  <div id="joint-toast" class="toast hidden"></div>
+
+  <!-- Announce bildirimi -->
+  <div id="announce-toast" class="toast hidden"></div>
+
+  <!-- Genel bildirim -->
+  <div id="notify-toast" class="toast notify hidden"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/voice.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
